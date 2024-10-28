@@ -2,6 +2,7 @@
 #include "LiveDump.hpp"
 
 #include <string>
+#include <vector>
 
 //
 // Globals
@@ -26,6 +27,7 @@ VOID PrintUsage(VOID)
   printf("\ttriage : create a triage dump (parameter 29)\n");
   printf("\tkernel : create a kernel dump (parameter 37)\n");
   printf("Options (triage dump only):\n");
+  printf("\t-t : Number of threads to include in the dump. Should be between 1 and 16. Default is 4.\n");
   printf("\t-p : PID to dump\n");
   printf("Options (kernel dump only):\n");
   printf("\t-c : compress memory pages in dump\n");
@@ -60,6 +62,7 @@ INT wmain(__in INT Argc, __in PWCHAR Argv[])
   NTSTATUS status;
   ULONG pid;
   ULONG fileFlags;
+  ULONG numThreads = 4;
 
   handle = INVALID_HANDLE_VALUE;
   result = NO_ERROR;
@@ -95,6 +98,21 @@ INT wmain(__in INT Argc, __in PWCHAR Argv[])
     }
     else if (_wcsicmp(Argv[i], L"-u") == 0) {
       flags.IncludeUserSpaceMemoryPages = 1;
+    }
+    else if (_wcsicmp(Argv[i], L"-t") == 0) {
+      if ((i + 1) >= Argc) {
+        printf("You must specify the number of threads.\n");
+        PrintUsage();
+        return 1;
+      }
+
+      numThreads = wcstoul(Argv[++i], '\0', 10);
+
+      if (numThreads == ULONG_MAX) {
+        printf("Invalid number of threads specified.\n");
+        PrintUsage();
+        return 1;
+      }
     }
     else if (_wcsicmp(Argv[i], L"-p") == 0) {
       if ((i + 1) >= Argc) {
@@ -193,7 +211,7 @@ INT wmain(__in INT Argc, __in PWCHAR Argv[])
   // Try to create the requested dump
   //
   if (_wcsicmp(type, L"triage") == 0) {
-    status = CreateTriageDump(handle, pid);
+    status = CreateTriageDump(handle, pid, numThreads);
   }
   else if (_wcsicmp(type, L"kernel") == 0) {
     status = CreateKernelDump(handle, flags, pages);
@@ -296,7 +314,7 @@ Exit:
 /// <remarks>
 /// </remarks>
 ///=========================================================================
-NTSTATUS CreateTriageDump(__in HANDLE FileHandle, __in ULONG Pid)
+NTSTATUS CreateTriageDump(__in HANDLE FileHandle, __in ULONG Pid, __in ULONG numThreads)
 {
   NTSTATUS status;
   SYSDBG_TRIAGE_DUMP dump;
@@ -305,15 +323,13 @@ NTSTATUS CreateTriageDump(__in HANDLE FileHandle, __in ULONG Pid)
   ULONG bytesWritten;
   HANDLE enumHandle;
   THREADENTRY32 thread;
-  HANDLE threadHandles[MAX_TRIAGE_THREADS];
-  INT threadCount;
   HANDLE processHandle;
+  std::vector<HANDLE> threadHandles;
 
   printf("Attempting to create a triage dump...\n");
 
   enumHandle = NULL;
   dumpData = NULL;
-  threadCount = 0;
   status = -1;
 
   //
@@ -371,17 +387,17 @@ NTSTATUS CreateTriageDump(__in HANDLE FileHandle, __in ULONG Pid)
       LocalFree(threadNameData);
       DWORD const crosscheckTID = GetThreadId(threadHandle);
 
-      if (threadCount < MAX_TRIAGE_THREADS) {
+      if (threadHandles.size() < numThreads) {
         wprintf(L"Dumping thread %6lu (%6lu), name \"%s\".\n", thread.th32ThreadID, crosscheckTID, threadName.c_str());
-        threadHandles[threadCount++] = threadHandle;
+        threadHandles.push_back(threadHandle);
       }
       else {
         wprintf(
-            L"Not using thread %6lu (%6lu), name \"%s\", MAX_TRIAGE_THREADS=%d exceeded.\n",
+            L"Not using thread %6lu (%6lu), name \"%s\", numThreads=%lu exceeded.\n",
             thread.th32ThreadID,
             crosscheckTID,
             threadName.c_str(),
-            MAX_TRIAGE_THREADS);
+            numThreads);
       }
 
       ++totalNumThreads;
@@ -390,12 +406,12 @@ NTSTATUS CreateTriageDump(__in HANDLE FileHandle, __in ULONG Pid)
   while ((Thread32Next(enumHandle, &thread)));
 
 
-  if (threadCount == 0) {
+  if (threadHandles.empty()) {
     printf("No suitable threads found in PID %lu\n", Pid);
     goto Exit;
   }
 
-  printf("Triage dump is for PID %lu with %lu threads (out of %lu threads).\n", Pid, threadCount, totalNumThreads);
+  printf("Triage dump is for PID %lu with %llu threads (out of %lu threads).\n", Pid, threadHandles.size(), totalNumThreads);
 
   //
   // Allocate buffer for triage dump data
@@ -410,8 +426,8 @@ NTSTATUS CreateTriageDump(__in HANDLE FileHandle, __in ULONG Pid)
   memset(&dump, 0, sizeof(dump));
   memset(dumpData, 0, TRIAGE_SIZE);
 
-  dump.ThreadHandles = threadCount;
-  dump.Handles = &threadHandles[0];
+  dump.ThreadHandles = (ULONG)threadHandles.size();
+  dump.Handles = threadHandles.data();
 
   assert(g_NtSystemDebugControl != NULL);
   status
@@ -447,8 +463,8 @@ Exit:
     CloseHandle(enumHandle);
   }
 
-  for (INT i = 0; i <= threadCount; i++) {
-    CloseHandle(threadHandles[i]);
+  for (HANDLE handle : threadHandles) {
+    CloseHandle(handle);
   }
 
   if (processHandle != INVALID_HANDLE_VALUE) {

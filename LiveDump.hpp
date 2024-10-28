@@ -10,7 +10,6 @@
 #define CONTROL_TRIAGE_DUMP 29
 #define CONTROL_KERNEL_DUMP 37
 #define TRIAGE_SIZE 0x100000 // must be >132kB and <1MB
-#define MAX_TRIAGE_THREADS 16
 
 #pragma comment(lib, "ntdll")
 
@@ -88,7 +87,7 @@ BOOL EnablePrivilege(__in PCWSTR PrivilegeName, __in BOOLEAN Acquire);
 
 
 NTSTATUS
-CreateTriageDump(__in HANDLE FileHandle, __in ULONG Pid);
+CreateTriageDump(__in HANDLE FileHandle, __in ULONG Pid, __in ULONG numThreads);
 
 
 NTSTATUS
