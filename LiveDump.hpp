@@ -1,10 +1,9 @@
-
 #pragma once
 
+#include <assert.h>
 #include <stdio.h>
 #include <windows.h>
 #include <winternl.h>
-#include <assert.h>
 #include <TlHelp32.h>
 
 #define NT_SUCCESS(Status) (((NTSTATUS)(Status)) >= 0)
@@ -15,21 +14,23 @@
 
 #pragma comment(lib, "ntdll")
 
+
 //
 // From NDK, argument required for parameter 29.
 //
 typedef struct _SYSDBG_TRIAGE_DUMP
 {
-    ULONG Flags;
-    ULONG BugCheckCode;
-    ULONG_PTR BugCheckParam1;
-    ULONG_PTR BugCheckParam2;
-    ULONG_PTR BugCheckParam3;
-    ULONG_PTR BugCheckParam4;
-    ULONG ProcessHandles;
-    ULONG ThreadHandles;
-    PHANDLE Handles;
+  ULONG Flags;
+  ULONG BugCheckCode;
+  ULONG_PTR BugCheckParam1;
+  ULONG_PTR BugCheckParam2;
+  ULONG_PTR BugCheckParam3;
+  ULONG_PTR BugCheckParam4;
+  ULONG ProcessHandles;
+  ULONG ThreadHandles;
+  PHANDLE Handles;
 } SYSDBG_TRIAGE_DUMP, *PSYSDBG_TRIAGE_DUMP;
+
 
 //
 // Undocumented.  Structures relevant for new parameter 37.
@@ -37,74 +38,64 @@ typedef struct _SYSDBG_TRIAGE_DUMP
 //
 typedef union _SYSDBG_LIVEDUMP_CONTROL_FLAGS
 {
-   struct
-    {
-        ULONG UseDumpStorageStack: 1;
-        ULONG CompressMemoryPagesData: 1;
-        ULONG IncludeUserSpaceMemoryPages: 1;
-        ULONG Reserved: 29;
-    };
-    ULONG AsUlong;
+  struct
+  {
+    ULONG UseDumpStorageStack : 1;
+    ULONG CompressMemoryPagesData : 1;
+    ULONG IncludeUserSpaceMemoryPages : 1;
+    ULONG Reserved : 29;
+  };
+  ULONG AsUlong;
 } SYSDBG_LIVEDUMP_CONTROL_FLAGS;
 
 
 typedef union _SYSDBG_LIVEDUMP_CONTROL_ADDPAGES
 {
-    struct
-    {
-        ULONG HypervisorPages: 1;
-        ULONG Reserved: 31;
-    };
-    ULONG AsUlong;
+  struct
+  {
+    ULONG HypervisorPages : 1;
+    ULONG Reserved : 31;
+  };
+  ULONG AsUlong;
 } SYSDBG_LIVEDUMP_CONTROL_ADDPAGES;
+
 
 typedef struct _SYSDBG_LIVEDUMP_CONTROL
 {
-   ULONG Version;
-   ULONG BugCheckCode;
-   ULONG_PTR BugCheckParam1;
-   ULONG_PTR BugCheckParam2;
-   ULONG_PTR BugCheckParam3;
-   ULONG_PTR BugCheckParam4;
-   PVOID DumpFileHandle;
-   PVOID CancelEventHandle;
-   SYSDBG_LIVEDUMP_CONTROL_FLAGS Flags;
-   SYSDBG_LIVEDUMP_CONTROL_ADDPAGES AddPagesControl;
+  ULONG Version;
+  ULONG BugCheckCode;
+  ULONG_PTR BugCheckParam1;
+  ULONG_PTR BugCheckParam2;
+  ULONG_PTR BugCheckParam3;
+  ULONG_PTR BugCheckParam4;
+  PVOID DumpFileHandle;
+  PVOID CancelEventHandle;
+  SYSDBG_LIVEDUMP_CONTROL_FLAGS Flags;
+  SYSDBG_LIVEDUMP_CONTROL_ADDPAGES AddPagesControl;
 } SYSDBG_LIVEDUMP_CONTROL, *PSYSDBG_LIVEDUMP_CONTROL;
 
-typedef
-NTSTATUS
-(__stdcall*
-NtSystemDebugControl) (
+
+typedef NTSTATUS(__stdcall * NtSystemDebugControl)(
     ULONG ControlCode,
     PVOID InputBuffer,
     ULONG InputBufferLength,
     PVOID OutputBuffer,
     ULONG OutputBufferLength,
-    PULONG ReturnLength
-    );
+    PULONG ReturnLength);
 
-BOOL
-EnablePrivilege (
-    __in PCWSTR PrivilegeName,
-    __in BOOLEAN Acquire
-    );
+
+BOOL EnablePrivilege(__in PCWSTR PrivilegeName, __in BOOLEAN Acquire);
+
 
 NTSTATUS
-CreateTriageDump (
-    __in HANDLE FileHandle,
-    __in ULONG Pid
-    );
+CreateTriageDump(__in HANDLE FileHandle, __in ULONG Pid);
+
 
 NTSTATUS
-CreateKernelDump (
+CreateKernelDump(
     __in HANDLE FileHandle,
     __in SYSDBG_LIVEDUMP_CONTROL_FLAGS Flags,
-    __in SYSDBG_LIVEDUMP_CONTROL_ADDPAGES Pages
-    );
+    __in SYSDBG_LIVEDUMP_CONTROL_ADDPAGES Pages);
 
-INT
-wmain (
-    __in INT Argc, 
-    __in PWCHAR Argv[]
-    );
+
+INT wmain(__in INT Argc, __in PWCHAR Argv[]);
