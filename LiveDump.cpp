@@ -1,6 +1,8 @@
 
 #include "LiveDump.hpp"
 
+#include <string>
+
 //
 // Globals
 //
@@ -341,6 +343,7 @@ NTSTATUS CreateTriageDump(__in HANDLE FileHandle, __in ULONG Pid)
     goto Exit;
   }
 
+  unsigned int totalNumThreads = 0;
   do {
     if (thread.dwSize >= FIELD_OFFSET(THREADENTRY32, th32OwnerProcessID) + sizeof(thread.th32OwnerProcessID)) {
       if (thread.th32OwnerProcessID != Pid) {
@@ -357,17 +360,43 @@ NTSTATUS CreateTriageDump(__in HANDLE FileHandle, __in ULONG Pid)
         continue;
       }
 
-      threadHandles[threadCount++] = threadHandle;
+      PWSTR threadNameData;
+      HRESULT hr = GetThreadDescription(threadHandle, &threadNameData);
+      if (FAILED(hr)) {
+        printf("Failed to get name of thread %lu, skipping.\n", thread.th32ThreadID);
+        continue;
+      }
+
+      std::wstring threadName(threadNameData);
+      LocalFree(threadNameData);
+      DWORD const crosscheckTID = GetThreadId(threadHandle);
+
+      if (threadCount < MAX_TRIAGE_THREADS) {
+        wprintf(L"Dumping thread %6lu (%6lu), name \"%s\".\n", thread.th32ThreadID, crosscheckTID, threadName.c_str());
+        threadHandles[threadCount++] = threadHandle;
+      }
+      else {
+        wprintf(
+            L"Not using thread %6lu (%6lu), name \"%s\", MAX_TRIAGE_THREADS=%d exceeded.\n",
+            thread.th32ThreadID,
+            crosscheckTID,
+            threadName.c_str(),
+            MAX_TRIAGE_THREADS);
+      }
+
+      ++totalNumThreads;
     }
   }
-  while ((Thread32Next(enumHandle, &thread)) && threadCount < MAX_TRIAGE_THREADS);
+  while ((Thread32Next(enumHandle, &thread)));
+
 
   if (threadCount == 0) {
     printf("No suitable threads found in PID %lu\n", Pid);
     goto Exit;
   }
 
-  printf("Triage dump is for PID %lu with %lu threads.\n", Pid, threadCount);
+  printf("Triage dump is for PID %lu with %lu threads (out of %lu threads).\n", Pid, threadCount, totalNumThreads);
+
   //
   // Allocate buffer for triage dump data
   //
@@ -392,6 +421,8 @@ NTSTATUS CreateTriageDump(__in HANDLE FileHandle, __in ULONG Pid)
     printf("NtSystemDebugControl failed:  %08x\n", status);
     goto Exit;
   }
+
+  printf("NtSystemDebugControl succeeded. ReturnLength = %lu. (TRIAGE_SIZE=%lu)\n", returnLength, TRIAGE_SIZE);
 
   if (returnLength == 0) {
     printf("Triage data buffer is empty.  Try a different process.\n");
