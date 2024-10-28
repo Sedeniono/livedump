@@ -9,7 +9,7 @@
 #define NT_SUCCESS(Status) (((NTSTATUS)(Status)) >= 0)
 #define CONTROL_TRIAGE_DUMP 29
 #define CONTROL_KERNEL_DUMP 37
-#define TRIAGE_SIZE 0x20000 // must be >132k and <1MB
+#define TRIAGE_SIZE 0x100000 // must be >132kB and <1MB
 #define MAX_TRIAGE_THREADS 16
 
 #pragma comment(lib, "ntdll")
