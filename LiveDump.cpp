@@ -305,7 +305,6 @@ NTSTATUS CreateTriageDump(__in HANDLE FileHandle, __in ULONG Pid)
   THREADENTRY32 thread;
   HANDLE threadHandles[MAX_TRIAGE_THREADS];
   INT threadCount;
-  HANDLE threadHandle;
   HANDLE processHandle;
 
   printf("Attempting to create a triage dump...\n");
@@ -344,7 +343,14 @@ NTSTATUS CreateTriageDump(__in HANDLE FileHandle, __in ULONG Pid)
 
   do {
     if (thread.dwSize >= FIELD_OFFSET(THREADENTRY32, th32OwnerProcessID) + sizeof(thread.th32OwnerProcessID)) {
-      threadHandle = OpenThread(THREAD_ALL_ACCESS, FALSE, thread.th32ThreadID);
+      if (thread.th32OwnerProcessID != Pid) {
+        continue;
+      }
+
+      HANDLE const threadHandle = OpenThread(THREAD_ALL_ACCESS, FALSE, thread.th32ThreadID);
+      if (threadHandle == NULL) {
+        continue;
+      }
 
       if (threadHandle == INVALID_HANDLE_VALUE) {
         printf("Failed to open thread %lu, skipping.\n", thread.th32ThreadID);
