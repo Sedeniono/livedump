@@ -7,11 +7,55 @@
 #include <TlHelp32.h>
 
 #define NT_SUCCESS(Status) (((NTSTATUS)(Status)) >= 0)
-#define CONTROL_TRIAGE_DUMP 29
-#define CONTROL_KERNEL_DUMP 37
 #define TRIAGE_SIZE 0x100000 // must be >132kB and <1MB
 
 #pragma comment(lib, "ntdll")
+
+
+// Taken from https://github.com/winsiderss/systeminformer/blob/82c625783a035fa7eac355783f527bb53fb1a384/phnt/include/ntexapi.h#L4654
+typedef enum _SYSDBG_COMMAND
+{
+  SysDbgQueryModuleInformation,
+  SysDbgQueryTraceInformation,
+  SysDbgSetTracepoint,
+  SysDbgSetSpecialCall, // PVOID
+  SysDbgClearSpecialCalls, // void
+  SysDbgQuerySpecialCalls,
+  SysDbgBreakPoint,
+  SysDbgQueryVersion, // DBGKD_GET_VERSION64
+  SysDbgReadVirtual, // SYSDBG_VIRTUAL
+  SysDbgWriteVirtual, // SYSDBG_VIRTUAL
+  SysDbgReadPhysical, // SYSDBG_PHYSICAL // 10
+  SysDbgWritePhysical, // SYSDBG_PHYSICAL
+  SysDbgReadControlSpace, // SYSDBG_CONTROL_SPACE
+  SysDbgWriteControlSpace, // SYSDBG_CONTROL_SPACE
+  SysDbgReadIoSpace, // SYSDBG_IO_SPACE
+  SysDbgWriteIoSpace, // SYSDBG_IO_SPACE
+  SysDbgReadMsr, // SYSDBG_MSR
+  SysDbgWriteMsr, // SYSDBG_MSR
+  SysDbgReadBusData, // SYSDBG_BUS_DATA
+  SysDbgWriteBusData, // SYSDBG_BUS_DATA
+  SysDbgCheckLowMemory, // 20
+  SysDbgEnableKernelDebugger,
+  SysDbgDisableKernelDebugger,
+  SysDbgGetAutoKdEnable,
+  SysDbgSetAutoKdEnable,
+  SysDbgGetPrintBufferSize,
+  SysDbgSetPrintBufferSize,
+  SysDbgGetKdUmExceptionEnable,
+  SysDbgSetKdUmExceptionEnable,
+  SysDbgGetTriageDump, // SYSDBG_TRIAGE_DUMP, CONTROL_TRIAGE_DUMP
+  SysDbgGetKdBlockEnable, // 30
+  SysDbgSetKdBlockEnable,
+  SysDbgRegisterForUmBreakInfo,
+  SysDbgGetUmBreakPid,
+  SysDbgClearUmBreakPid,
+  SysDbgGetUmAttachPid,
+  SysDbgClearUmAttachPid,
+  SysDbgGetLiveKernelDump, // SYSDBG_LIVEDUMP_CONTROL, CONTROL_KERNEL_DUMP
+  SysDbgKdPullRemoteFile, // SYSDBG_KD_PULL_REMOTE_FILE
+  SysDbgMaxInfoClass
+} SYSDBG_COMMAND;
 
 
 //

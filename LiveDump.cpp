@@ -467,7 +467,7 @@ NTSTATUS CreateTriageDump(__in HANDLE FileHandle, __in ULONG Pid, __in ULONG num
 
   assert(g_NtSystemDebugControl != NULL);
   status
-      = g_NtSystemDebugControl(CONTROL_TRIAGE_DUMP, (PVOID)(&dump), sizeof(dump), dumpData, TRIAGE_SIZE, &returnLength);
+      = g_NtSystemDebugControl(SysDbgGetTriageDump, (PVOID)(&dump), sizeof(dump), dumpData, TRIAGE_SIZE, &returnLength);
 
   if (!NT_SUCCESS(status)) {
     printf("NtSystemDebugControl failed:  %08x\n", status);
@@ -550,7 +550,7 @@ NTSTATUS CreateKernelDump(
   liveDumpControl.Flags = Flags;
 
   status = g_NtSystemDebugControl(
-      CONTROL_KERNEL_DUMP,
+      SysDbgGetLiveKernelDump,
       (PVOID)(&liveDumpControl),
       sizeof(liveDumpControl),
       NULL,
