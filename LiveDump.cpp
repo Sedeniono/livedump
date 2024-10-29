@@ -31,8 +31,7 @@ VOID PrintUsage(VOID)
   printf("\t-p : PID to dump\n");
   printf("Options (kernel dump only):\n");
   printf("\t-c : compress memory pages in dump\n");
-  printf(
-      "\t-d : Use dump stack (currently not implemented in Windows 8.1, 9600.16404.x86fre.winblue_gdr.130913-2141)\n");
+  printf("\t-d : Use dump stack (not implemented in Windows 8.1)\n");
   printf("\t-h : add hypervisor pages\n");
   printf("\t-u : also dump user space memory\n");
   printf("FileName is the full path to the dump file to create.");
@@ -447,7 +446,11 @@ NTSTATUS CreateTriageDump(__in HANDLE FileHandle, __in ULONG Pid, __in ULONG num
     goto Exit;
   }
 
-  printf("Triage dump is for PID %lu with %llu threads (out of %lu threads).\n", Pid, threadHandles.size(), totalNumThreads);
+  printf(
+      "Triage dump is for PID %lu with %llu threads (out of %lu threads).\n",
+      Pid,
+      threadHandles.size(),
+      totalNumThreads);
 
   //
   // Allocate buffer for triage dump data
