@@ -14,7 +14,11 @@ The code in this repository here shows how to call that API directly.
 This is a fork and improved version of [github.com/lilhoser/livedump](https://github.com/lilhoser/livedump).
 
 
-# Synopsis
+# How to use
+You can download the prebuilt binary from the [releases page](https://github.com/Sedeniono/livedump/releases).  
+To build it yourself: Clone the git repository and open the solution in Visual Studio 2022.
+
+Synopsis:
 ```
 LiveDump.exe [type] [options] <FileName>
 Type:
