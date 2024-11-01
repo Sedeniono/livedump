@@ -24,16 +24,16 @@ VOID PrintUsage(VOID)
   printf("\n\n");
   printf("LiveDump.exe [type] [options] <FileName>\n");
   printf("Type:\n");
-  printf("\ttriage : create a triage dump (parameter 29)\n");
-  printf("\tkernel : create a kernel dump (parameter 37)\n");
-  printf("Options (triage dump only):\n");
+  printf("\ttriage : create a kernel triage dump (parameter 29)\n");
+  printf("\tkernel : create a kernel live dump (parameter 37)\n");
+  printf("Options (kernel triage dump only):\n");
   printf("\t-t : Number of threads to include in the dump. Should be between 1 and 16. Default is 4.\n");
   printf("\t-p : PID to dump\n");
-  printf("Options (kernel dump only):\n");
+  printf("Options (kernel live dump only):\n");
   printf("\t-c : compress memory pages in dump\n");
-  printf("\t-d : Use dump stack (not implemented in Windows 8.1)\n");
+  printf("\t-d : Use dump stack\n");
   printf("\t-h : add hypervisor pages\n");
-  printf("\t-u : also dump user space memory\n");
+  printf("\t-u : also dump user space memory (possible starting with Windows 11 22H2)\n");
   printf("FileName is the full path to the dump file to create.");
   printf("\n");
 }
